@@ -13,19 +13,19 @@ Module["resampler_init"] = function (nb_channels, in_rate, out_rate, quality) {
 };
 
 Module["resampler_process_float"] = function (st, channel_index, _in) {
-	var rawInLen = _in.length * 4;
+	var rawInLen = _in.length;
 	const rawInLenPtr = Module._malloc(4);
 	Module.setValue(rawInLenPtr, rawInLen, 'i32');
 
-	const rawInPtr = Module._malloc(rawInLen);
-	Module.HEAPF32.set(_in, rawInPtr / 4, (rawInPtr + rawInLen) / 4);
+	const rawInPtr = Module._malloc(rawInLen * 4);
+	Module.HEAPF32.set(_in, rawInPtr / 4, rawInPtr / 4 + rawInLen);
 
 	const ratio = Module.resampler_get_ratio(st);
 	var rawOutLen = Math.ceil(rawInLen * ratio.denominator / ratio.numerator);
 	const rawOutLenPtr = Module._malloc(4);
 	Module.setValue(rawOutLenPtr, rawOutLen, 'i32');
 
-	const rawOutPtr = Module._malloc(rawOutLen);
+	const rawOutPtr = Module._malloc(rawOutLen * 4);
 
 	const error = Module._speex_resampler_process_float(st, channel_index, rawInPtr, rawInLenPtr, rawOutPtr, rawOutLenPtr);
 
