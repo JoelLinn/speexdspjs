@@ -58,10 +58,13 @@ Module["resampler_get_ratio"] = function (st) {
 
 	Module._speex_resampler_get_ratio(st, numPtr, denPtr);
 
-	return {
+	const ret = {
 		numerator: Module.getValue(numPtr, 'i32'),
 		denominator: Module.getValue(denPtr, 'i32')
 	};
+	Module._free(numPtr);
+	Module._free(denPtr);
+	return ret;
 };
 
 Module["resampler_reset_mem"] = function (st) {
