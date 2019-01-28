@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>SpeexDSPJS test</title>
+  </head>
+  <body>
+    <div>
+        <pre id="log"></pre>
+    </div>
+    <script src="../build/speexdsp.js"></script>
+    <script>
+    "use strict";
+    function log() {
+        document.querySelector('#log').textContent += Array.prototype.join.call(arguments, '') + '\n';
+    }
+    speexdsp.onRuntimeInitialized = _ => {
+      log('speexDSP is ready');
+      startOscillator();
+    };
+
+    function startOscillator() {
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      // create a resampler from 8kHz to the browsers sample rate
+      const rsmp = speexdsp.resampler_init(1, 8000, context.sampleRate, 1);
+      
+      const processor = context.createScriptProcessor(0, 1, 1);
+      processor.onaudioprocess = function(e){
+        const pcm = e.outputBuffer.getChannelData(0);
+        // create white noise
+        for (let i = 0; i<e.outputBuffer.length; i++) {
+          pcm[i] = 2*Math.random()-1;
+        }
+        if (parseInt(new Date().getTime() / 1000) % 2 === 0) {
+          // upsampling white noise will act like a low pass filter
+          // there will be more samples in the return value so truncate
+          pcm.set(speexdsp.resampler_process_float(rsmp, 0, pcm).slice(0, pcm.length));
+        }
+      };
+      processor.connect(context.destination);
+    }
+    </script>
+  </body>
+</html>
